@@ -14,7 +14,7 @@ const start = async()=>{
     }
 }
 app.use(cors({
-    origin: 'http://localhost:3000',  // Replace with your frontend's URL
+    origin: ['http://localhost:3000', 'https://book-hub-black.vercel.app'],  // Replace with your frontend's URL
     credentials: true,  // This allows cookies to be sent across origins
     optionsSuccessStatus: 200,  // Some legacy browsers choke on 204
   }));
