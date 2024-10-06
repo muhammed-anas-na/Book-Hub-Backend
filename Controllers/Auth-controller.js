@@ -90,7 +90,7 @@ export const googleSignin = async(req,res)=>{
     res.cookie('auth', JSON.stringify(userData), {
         httpOnly: true,
         secure: process.env.ENVIRONMENT === 'production',
-        sameSite: 'lax',
+        sameSite: 'None',
         maxAge: 24 * 60 * 60 * 1000,
       });
     res.json({ success: true });
