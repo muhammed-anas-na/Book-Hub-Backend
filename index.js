@@ -4,7 +4,7 @@ import router from './Routes/index.js';
 import session from 'express-session';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dot-env';
+import dotenv from 'dotenv';
 dotenv.config();
 
 const app = Express();
@@ -19,6 +19,7 @@ app.use(cors({
     origin: ['http://localhost:3000', 'https://book-hub-black.vercel.app'],  // Replace with your frontend's URL
     credentials: true,  // This allows cookies to be sent across origins
     optionsSuccessStatus: 200,  // Some legacy browsers choke on 204
+    allowedHeaders: ['Content-Type', 'Authorization'],  // Allowed headers
   }));
   
 app.use(cookieParser());
