@@ -4,8 +4,7 @@ import router from './Routes/index.js';
 import session from 'express-session';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dot-env';
-dotenv.config();
+
 
 const app = Express();
 const start = async()=>{

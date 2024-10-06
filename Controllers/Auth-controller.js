@@ -11,6 +11,8 @@ import {addRequestCallback,
      findNearestBooksFromDB, 
      getMyBookFromDb } from '../Database/MongoDB/Repository.js'
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config()
 
 const MAPBOX_API_KEY = "pk.eyJ1IjoiYW5hcy1uYSIsImEiOiJjbHJocnlwcmMwMm4wMmltbDhmOWFieXI1In0.-HhwhnfkjKGXxpVSxyXWQg";
 export const LoginController = (req, res) => {
