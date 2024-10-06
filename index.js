@@ -4,7 +4,8 @@ import router from './Routes/index.js';
 import session from 'express-session';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-
+import dotenv from 'dot-env';
+dotenv.config();
 
 const app = Express();
 const start = async()=>{
@@ -26,9 +27,8 @@ app.use(session({
     resave: false,             // Forces the session to be saved back to the store
     saveUninitialized: true,   // Forces a session that is "uninitialized" to be saved
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24,  // 1-day expiration
-      httpOnly: true,               // Helps to prevent XSS attacks
-      secure: process.env.NODE_ENV === 'production', // Ensure cookies are secure in production (over HTTPS)
+        sameSite: 'None',
+        maxAge: 1000 * 60 * 60 * 24,
     }
 }));
 app.use(Express.json());
