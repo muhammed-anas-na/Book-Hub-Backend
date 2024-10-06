@@ -63,7 +63,7 @@ export const addBookToDatabase = async({
     } 
 }
 
-export const findNearestBooks=async(latitude,longitude, distanceInMeter)=>{
+export const findNearestBooksFromDB=async(latitude,longitude, distanceInMeter)=>{
     try {
         console.log(latitude,longitude)
         const nearestBooks = await bookModel.find({

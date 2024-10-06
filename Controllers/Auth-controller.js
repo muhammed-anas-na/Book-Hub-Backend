@@ -8,7 +8,7 @@ import {addRequestCallback,
      checkUserExist, 
      createNewUser, 
      addBookToDatabase, 
-     findNearestBooks, 
+     findNearestBooksFromDB, 
      getMyBookFromDb } from '../Database/MongoDB/Repository.js'
 import axios from 'axios';
 
@@ -56,7 +56,7 @@ export const findNearestBook = async(req,res)=>{
         })
     }
     const distanceInMeter = distanceInKm * 1000;
-    const data = await findNearestBooks(latitude,longitude, distanceInMeter);
+    const data = await findNearestBooksFromDB(latitude,longitude, distanceInMeter);
     console.log("Nearest books => " , data);
     res.json(data);
 
@@ -110,8 +110,13 @@ export const googleSignin = async(req,res)=>{
  export const GET_LOCATION_FROM_POINTS_AND_UPDATE_USER = async(req,res)=>{
     const {latitude,longitude} = req.body;
     const user = JSON.parse(req.cookies.auth);
+    let result;
     console.log(user);
-    let result = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_API_KEY}`);
+    try{
+        result = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_API_KEY}`);
+    }catch(err){
+        console.log("Error while fetchin data from MAPBOX :" , err)
+    }
     let updatedUser = await updateUserLocation(user._id , result?.data?.features[0]?.place_name, latitude, longitude);
     res.cookie('auth', JSON.stringify(updatedUser), {
         httpOnly: true,
