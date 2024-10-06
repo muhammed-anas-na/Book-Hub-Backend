@@ -26,7 +26,9 @@ app.use(session({
     resave: false,             // Forces the session to be saved back to the store
     saveUninitialized: true,   // Forces a session that is "uninitialized" to be saved
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 // Cookie expiration time (1 day in this example)
+      maxAge: 1000 * 60 * 60 * 24,  // 1-day expiration
+      httpOnly: true,               // Helps to prevent XSS attacks
+      secure: process.env.NODE_ENV === 'production', // Ensure cookies are secure in production (over HTTPS)
     }
 }));
 app.use(Express.json());

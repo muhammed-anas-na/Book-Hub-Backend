@@ -5,8 +5,6 @@ import {addRequestCallback,
      getBooksFromDB,
      updateUserLocation,
      AddUserFromGoogle, 
-     checkUserExist, 
-     createNewUser, 
      addBookToDatabase, 
      findNearestBooksFromDB, 
      getMyBookFromDb } from '../Database/MongoDB/Repository.js'
@@ -91,14 +89,14 @@ export const googleSignin = async(req,res)=>{
     const userData = await AddUserFromGoogle(email,displayName,profileURL,token);
     res.cookie('auth', JSON.stringify(userData), {
         httpOnly: true,
-        secure: process.env.ENVIRONMENT === 'production', // true in production, false in development
-        sameSite: 'lax', // Changed from 'strict' to 'lax'
-        maxAge: 24 * 60 * 60 * 1000, // Extended to 24 hours
+        secure: process.env.ENVIRONMENT === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
       });
-      console.log("Res.cookie ==> ",res.cookie)
-      res.json({ success: true });
+    res.json({ success: true });
 }
  export const getLoggedInUser =(req,res)=>{
+    console.log(req.cookies.auth)
     const authCookie = req.cookies.auth;
     if (authCookie) {
       const userData = JSON.parse(authCookie);
