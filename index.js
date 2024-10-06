@@ -15,7 +15,7 @@ const start = async()=>{
         console.log("Error while connecting to db");
     }
 }
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 app.use(cors({
     origin: ['http://localhost:3000', 'https://book-hub-black.vercel.app'],  // Replace with your frontend's URL
     credentials: true,  // This allows cookies to be sent across origins
@@ -29,6 +29,7 @@ app.use(session({
     resave: false,             // Forces the session to be saved back to the store
     saveUninitialized: true,   // Forces a session that is "uninitialized" to be saved
     cookie: {
+        sameSite:"None",
         maxAge: 1000 * 60 * 60 * 24,
     }
 }));
