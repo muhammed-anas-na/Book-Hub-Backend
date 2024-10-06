@@ -27,7 +27,6 @@ app.use(session({
     resave: false,             // Forces the session to be saved back to the store
     saveUninitialized: true,   // Forces a session that is "uninitialized" to be saved
     cookie: {
-        sameSite: 'None',
         maxAge: 1000 * 60 * 60 * 24,
     }
 }));
