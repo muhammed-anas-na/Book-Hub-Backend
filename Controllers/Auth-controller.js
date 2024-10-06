@@ -87,15 +87,14 @@ export const googleSignin = async(req,res)=>{
         email
     } = req.body
     const userData = await AddUserFromGoogle(email,displayName,profileURL,token);
-        res.cookie('auth', JSON.stringify(userData), {
+    res.cookie('auth', JSON.stringify(userData), {
         httpOnly: true,
-        secure: false,
-        sameSite: 'strict',
-        maxAge: 3600000 // 1 hour
+        secure: process.env.ENVIRONMENT === 'production', // true in production, false in development
+        sameSite: 'lax', // Changed from 'strict' to 'lax'
+        maxAge: 24 * 60 * 60 * 1000, // Extended to 24 hours
       });
-      console.log(res.cookie)
+      console.log("Res.cookie ==> ",res.cookie)
       res.json({ success: true });
-    //If not exist Add User details to DB.
 }
  export const getLoggedInUser =(req,res)=>{
     const authCookie = req.cookies.auth;
@@ -109,6 +108,7 @@ export const googleSignin = async(req,res)=>{
 
  export const GET_LOCATION_FROM_POINTS_AND_UPDATE_USER = async(req,res)=>{
     const {latitude,longitude} = req.body;
+    console.log("Cookie == >",req.cookie);
     const user = JSON.parse(req.cookies.auth);
     let result;
     console.log(user);
