@@ -8,13 +8,13 @@ let bookModelSchema = new mongoose.Schema({
     },
     title:{
         type: String,
-        requireed:true,
+        required:true,
     },
     description:{
         type: String,
         required:true,
     },
-    author:{
+    category:{
         type: String,
     },
     willingTo:{

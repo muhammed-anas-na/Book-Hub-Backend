@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-import { LoginController, requestCallback,
+import { LoginController, requestCallback,getUserQueries,getSearchLengths,
     addBook,findNearestBook, getMyBooks,updateProfile,googleSignin , getLoggedInUser,
     getBooks,
-    GET_LOCATION_FROM_POINTS_AND_UPDATE_USER,GET_LOCATION_FROM_POINTS,getUserBooks,getBookDetailsByID} from '../Controllers/Auth-controller.js';
+    GET_LOCATION_FROM_POINTS_AND_UPDATE_USER,GET_LOCATION_FROM_POINTS,getUserBooks,getBookDetailsByID,
+    } from '../Controllers/Auth-controller.js';
 
 
 router.get('/health-check',(req,res)=>res.json({
@@ -24,8 +25,9 @@ router.get('/get-books' , getBooks);
 router.post('/get-user-books' , getUserBooks) //Completed
 router.post('/get-book-details-by-id' , getBookDetailsByID); //Completed
 router.post('/request-callback' , requestCallback)
-
-
+router.post('/get-user-queries', getUserQueries);
+//Working on ...........
+router.post('/get-search-length' , getSearchLengths)
 
 
 router.post('/get-my-books', getMyBooks)

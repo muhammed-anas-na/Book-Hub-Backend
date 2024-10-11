@@ -1,13 +1,18 @@
 
-import {addRequestCallback,
+import {
+    addRequestCallback,
     GetBookDetailsFromDB,
     getUserBooksFromDB,
-     getBooksFromDB,
-     updateUserLocation,
-     AddUserFromGoogle, 
-     addBookToDatabase, 
-     findNearestBooksFromDB, 
-     getMyBookFromDb } from '../Database/MongoDB/Repository.js'
+    getBooksFromDB,
+    updateUserLocation,
+    AddUserFromGoogle,
+    addBookToDatabase,
+    findNearestBooksFromDB,
+    getMyBookFromDb,
+    GET_USER_QUERIES_FROM_DB,
+    GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH,
+    
+} from '../Database/MongoDB/Repository.js'
 import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config()
@@ -17,151 +22,177 @@ export const LoginController = (req, res) => {
 
 }
 
-export const addBook = async(req,res) =>{
-    console.log(req.body);
-    const {title, description, author="", willingTo,location,selectedBookCover} = req.body;
-    const {locationInText,latitude,longitude} = location;
-    const authCookie = req.cookies.auth;
-    console.log("Logged In User ==>" , authCookie);
-    const userData = JSON.parse(authCookie);
-    const data = await addBookToDatabase({
-        userId:userData._id,
-        title,
-        description,
-        author,
-        willingTo,
-        locationInText,
-        latitude,
-        longitude,
-        selectedBookCover,
-    })
-    res.json({
-        newBook:data[0]
-    })
+export const addBook = async (req, res) => {
+
+    try {
+        console.log(req.body);
+        const { title, description, willingTo, location, selectedBookCover,category } = req.body;
+        const { locationInText, latitude, longitude } = location;
+        const authCookie = req.cookies.auth;
+        console.log("Logged In User ==>", authCookie);
+        const userData = JSON.parse(authCookie);
+        const data = await addBookToDatabase({
+            userId: userData._id,
+            title,
+            description,
+            willingTo,
+            locationInText,
+            latitude,
+            longitude,
+            selectedBookCover,
+            category,
+        })
+        res.json({
+            newBook: data[0]
+        })
+    } catch (err) {
+        return res.json(err);
+    }
 }
 
-export const findNearestBook = async(req,res)=>{
-    const {distanceInKm = 5} = req.body;
+export const findNearestBook = async (req, res) => {
+    const { distanceInKm = 5 } = req.body;
     let latitude;
     let longitude
-    try{
+    try {
         const loggedInUser = JSON.parse(req.cookies.auth);
-        console.log("Logged In user ==>" , loggedInUser);
+        console.log("Logged In user ==>", loggedInUser);
         latitude = loggedInUser.location.coordinates[1]
         longitude = loggedInUser.location.coordinates[0]
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.json({
-            err:"User not logged in or not added location."
+            err: "User not logged in or not added location."
         })
     }
     const distanceInMeter = distanceInKm * 1000;
-    const data = await findNearestBooksFromDB(latitude,longitude, distanceInMeter);
-    console.log("Nearest books => " , data);
+    const data = await findNearestBooksFromDB(latitude, longitude, distanceInMeter);
+    console.log("Nearest books => ", data);
     res.json(data);
 
 }
 
-export const getMyBooks = async(req,res)=>{
-    try{
-        const {userId} = req.body;
+export const getMyBooks = async (req, res) => {
+    try {
+        const { userId } = req.body;
         const myBook = await getMyBookFromDb(userId)
         res.json(myBook);
-    }catch(err){
+    } catch (err) {
         console.log(err);
     }
 }
-export const updateProfile = async(req,res)=>{
-    try{
+export const updateProfile = async (req, res) => {
+    try {
         const data = updateProfileInDb()
-    }catch(err){
+    } catch (err) {
         console.log(err);
     }
 }
 
-export const googleSignin = async(req,res)=>{
+export const googleSignin = async (req, res) => {
     const {
         token,
         displayName,
         profileURL,
         email
     } = req.body
-    const userData = await AddUserFromGoogle(email,displayName,profileURL,token);
+    const userData = await AddUserFromGoogle(email, displayName, profileURL, token);
+    console.log("Secure : ", process.env.ENVIRONMENT === 'production')
     res.cookie('auth', JSON.stringify(userData), {
         httpOnly: true,
-        secure: process.env.ENVIRONMENT === 'production',
+        secure: true,
         sameSite: 'None',
         maxAge: 24 * 60 * 60 * 1000,
-      });
+    });
     res.json({ success: true });
 }
- export const getLoggedInUser =(req,res)=>{
+export const getLoggedInUser = (req, res) => {
     console.log(req.cookies.auth)
     const authCookie = req.cookies.auth;
     if (authCookie) {
-      const userData = JSON.parse(authCookie);
-      res.json(userData);
+        const userData = JSON.parse(authCookie);
+        res.json(userData);
     } else {
-      res.status(401).json({ error: 'Not authenticated' });
+        res.status(401).json({ error: 'Not authenticated' });
     }
- }
+}
 
- export const GET_LOCATION_FROM_POINTS_AND_UPDATE_USER = async(req,res)=>{
-    const {latitude,longitude} = req.body;
-    console.log("Cookie == >",req.cookie);
+export const GET_LOCATION_FROM_POINTS_AND_UPDATE_USER = async (req, res) => {
+    const { latitude, longitude } = req.body;
+    console.log("Cookie == >", req.cookie);
     const user = JSON.parse(req.cookies.auth);
     let result;
     console.log(user);
-    try{
+    try {
         result = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_API_KEY}`);
-    }catch(err){
-        console.log("Error while fetchin data from MAPBOX :" , err)
+    } catch (err) {
+        console.log("Error while fetchin data from MAPBOX :", err)
     }
-    let updatedUser = await updateUserLocation(user._id , result?.data?.features[0]?.place_name, latitude, longitude);
+    let updatedUser = await updateUserLocation(user._id, result?.data?.features[0]?.place_name, latitude, longitude);
     res.cookie('auth', JSON.stringify(updatedUser), {
         httpOnly: true,
         secure: false,
         sameSite: 'strict',
         maxAge: 3600000 // 1 hour
-      });
-    res.json({
-        locationName : result?.data?.features[0]?.place_name
     });
-    
- }
+    res.json({
+        locationName: result?.data?.features[0]?.place_name
+    });
 
-export const GET_LOCATION_FROM_POINTS = async(req,res)=>{
-    const {latitude,longitude} = req.body;
+}
+
+export const GET_LOCATION_FROM_POINTS = async (req, res) => {
+    const { latitude, longitude } = req.body;
     let result = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_API_KEY}`);
     res.json(result?.data?.features[0]?.place_name)
 
 }
 
- export const getBooks = async(req,res)=>{
+export const getBooks = async (req, res) => {
     const books = await getBooksFromDB();
     res.json(books)
- }
+}
 
- export const getUserBooks = async(req,res)=>{
-    const {userId} = req.body;
+export const getUserBooks = async (req, res) => {
+    console.log("Body", req.body);
+    const { userId } = req.body;
     console.log(req.body)
     const books = await getUserBooksFromDB(userId);
     console.log(books);
     res.json(books)
- }
- export const getBookDetailsByID = async(req,res)=>{
+}
+export const getBookDetailsByID = async (req, res) => {
     console.log("HERE")
-    const {bookId} = req.body;
+    const { bookId } = req.body;
     const bookDetails = await GetBookDetailsFromDB(bookId);
     res.json(bookDetails);
- }
+}
 
- export const requestCallback = async(req,res)=>{
-    try{
+export const requestCallback = async (req, res) => {
+    try {
         console.log(req.body);
         const response = await addRequestCallback(req.body);
         res.json(response);
+    } catch (err) {
+        res.json(err);
+    }
+}
+
+export const getUserQueries = async(req,res)=>{
+    try{
+        const userData = await GET_USER_QUERIES_FROM_DB(req.body.userId)
+        console.log(userData?.callbacks);
+        res.json({
+            callbacks: userData?.callbacks
+        })
     }catch(err){
         res.json(err);
     }
- }
+}
+
+
+export const getSearchLengths = async(req,res)=>{
+    console.log("Search Word",req.body);
+    const response = await GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH(req.body.data);
+    res.json(response);
+}
