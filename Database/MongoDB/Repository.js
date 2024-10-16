@@ -3,265 +3,295 @@ import userModel from "./Models/userModel.js";
 import bookModel from "./Models/bookModel.js";
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { query } from "express";
 dotenv.config();
 
 // Create transporter outside the function to reuse it
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 
-    export const checkUserExist=async(phone)=>{
-        const user = await userModel.findOne({
-            phone
-        })
-        console.log("Result from DB =>", user)
-        return user !== null;
-    }
-
-export const createNewUser = async(name,phone,latitude,longitude)=>{
-    return userModel.insertMany({
-        name,
-        phone,
-        location: {
-            coordinates: [longitude, latitude]
-        }
-    })
-}
-export const addBookToDatabase = async({
-    userId,
-    title,
-    description,
-    willingTo,
-    latitude,
-    longitude,
-    selectedBookCover,
-    locationInText,
-    category
-})=>{
-    let curr_latitude = latitude;
-    let curr_longitude = longitude;
-    let curr_locationInText = locationInText;
-    if(!latitude || !longitude) {
-        try{
-            var user = await userModel.findById(userId);
-            console.log("Current user ==> ",user);
-            curr_longitude = user.location.coordinates[0];
-            curr_latitude = user.location.coordinates[1];
-            curr_locationInText = user.locationInText
-        }catch(err){
-            console.log(err);
-            return err;
-        }
-    }
-    try{
-        return await bookModel.insertMany({
-            userId,
-            title,
-            description,
-            willingTo,
-            location: {
-                coordinates: [curr_longitude, curr_latitude]
-            },
-            locationInText: curr_locationInText,
-            selectedBookCover,
-            category,
-        })
-    }catch(err){
-        console.log(err)
-    } 
+export const checkUserExist = async (phone) => {
+  const user = await userModel.findOne({
+    phone
+  })
+  console.log("Result from DB =>", user)
+  return user !== null;
 }
 
-export const findNearestBooksFromDB=async(latitude,longitude, distanceInMeter)=>{
+export const createNewUser = async (name, phone, latitude, longitude) => {
+  return userModel.insertMany({
+    name,
+    phone,
+    location: {
+      coordinates: [longitude, latitude]
+    }
+  })
+}
+export const addBookToDatabase = async ({
+  userId,
+  title,
+  description,
+  willingTo,
+  latitude,
+  longitude,
+  selectedBookCover,
+  locationInText,
+  category
+}) => {
+  let curr_latitude = latitude;
+  let curr_longitude = longitude;
+  let curr_locationInText = locationInText;
+  if (!latitude || !longitude) {
     try {
-        console.log(latitude,longitude)
-        const nearestBooks = await bookModel.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [longitude, latitude]
-                    },
-                    $maxDistance: distanceInMeter  // 5 km radius (in meters)
-                }
-            }
-        });
-
-        return nearestBooks;
+      var user = await userModel.findById(userId);
+      console.log("Current user ==> ", user);
+      curr_longitude = user.location.coordinates[0];
+      curr_latitude = user.location.coordinates[1];
+      curr_locationInText = user.locationInText
     } catch (err) {
-        console.log(err);
-        return null;
+      console.log(err);
+      return err;
     }
-}
-
-export const getMyBookFromDb = async(userId)=>{
-    const books = await bookModel.find({
-        userId
+  }
+  try {
+    return await bookModel.insertMany({
+      userId,
+      title,
+      description,
+      willingTo,
+      location: {
+        coordinates: [curr_longitude, curr_latitude]
+      },
+      locationInText: curr_locationInText,
+      selectedBookCover,
+      category,
     })
-    return books;
+  } catch (err) {
+    console.log(err)
+  }
 }
 
-export const AddUserFromGoogle = async(
-    email,
-    displayName,
-    profileURL,
-    token,
-)=>{
-    return userModel.findOneAndUpdate(
-        { email: email }, // Search for user by email
-        {
-          $set: {
-            displayName: displayName,
-            profileURL: profileURL,
-            token: token, // You can choose to store the token if necessary
+export const findNearestBooksFromDB = async (latitude, longitude, distanceInMeter) => {
+  try {
+    console.log(latitude, longitude)
+    const nearestBooks = await bookModel.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude]
           },
-        },
-        {
-          new: true,  // Return the updated document
-          upsert: true, // If user does not exist, create a new one
-          setDefaultsOnInsert: true, // Applies schema defaults if a new document is inserted
+          $maxDistance: distanceInMeter  // 5 km radius (in meters)
         }
-      );
-}
-
-
-export const updateUserLocation = async(userId, location, latitude, longitude)=>{
-    console.log(userId)
-    return userModel.findByIdAndUpdate(userId , {
-        locationInText: location,
-        location: {
-            type: 'Point',  // GeoJSON format requires the type to be 'Point'
-            coordinates: [longitude, latitude],  // Coordinates are in [longitude, latitude] order
-        }
-    },{new:true})
-}
-
-
-export const getBooksFromDB = async()=>{
-    return bookModel.find()
-}
-
-export const getUserBooksFromDB = async(userId)=>{
-    console.log("User id : ", userId);
-    return bookModel.find({
-        userId,
-    })
-}
-
-export const GetBookDetailsFromDB = async(bookId)=>{
-    return bookModel.findById(bookId)
-}
-
-export const addRequestCallback = async ({ name, number, bookId,selectedBookCover,title }) => {
-    try {
-      // Find the book details based on the bookId
-      const bookDetails = await bookModel.findById(bookId);
-      
-      // If no book found, return an error
-      if (!bookDetails) {
-        throw new Error("Book not found");
       }
-  
-      // Push the name and phone to the user's callbacks array
-      const updatedUser = await userModel.findByIdAndUpdate(
-        bookDetails.userId, 
-        {
-          $push: {
-            callbacks: {bookId, name, number,selectedBookCover,title } // Push new callback entry
-          }
-        },
-        { new: true }
-      );
-      if (!updatedUser) {
-        throw new Error("User not found");
+    });
+
+    return nearestBooks;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+}
+
+export const getMyBookFromDb = async (userId) => {
+  const books = await bookModel.find({
+    userId
+  })
+  return books;
+}
+
+export const AddUserFromGoogle = async (
+  email,
+  displayName,
+  profileURL,
+  token,
+) => {
+  return userModel.findOneAndUpdate(
+    { email: email }, // Search for user by email
+    {
+      $set: {
+        displayName: displayName,
+        profileURL: profileURL,
+        token: token, // You can choose to store the token if necessary
+      },
+    },
+    {
+      new: true,  // Return the updated document
+      upsert: true, // If user does not exist, create a new one
+      setDefaultsOnInsert: true, // Applies schema defaults if a new document is inserted
+    }
+  );
+}
+
+
+export const updateUserLocation = async (userId, location, latitude, longitude) => {
+  console.log(userId)
+  return userModel.findByIdAndUpdate(userId, {
+    locationInText: location,
+    location: {
+      type: 'Point',  // GeoJSON format requires the type to be 'Point'
+      coordinates: [longitude, latitude],  // Coordinates are in [longitude, latitude] order
+    }
+  }, { new: true })
+}
+
+
+export const getBooksFromDB = async () => {
+  return bookModel.find()
+}
+
+export const getUserBooksFromDB = async (userId) => {
+  console.log("User id : ", userId);
+  return bookModel.find({
+    userId,
+  })
+}
+
+export const GetBookDetailsFromDB = async (bookId) => {
+  return bookModel.findById(bookId)
+}
+
+export const addRequestCallback = async ({ name, number, bookId, selectedBookCover, title }) => {
+  try {
+    // Find the book details based on the bookId
+    const bookDetails = await bookModel.findById(bookId);
+
+    // If no book found, return an error
+    if (!bookDetails) {
+      throw new Error("Book not found");
     }
 
-    sendEmailAboutCallback(updatedUser.email , {
-        enquirerName:name,
-        bookTitle:title,
-        bookId:bookId
+    // Push the name and phone to the user's callbacks array
+    const updatedUser = await userModel.findByIdAndUpdate(
+      bookDetails.userId,
+      {
+        $push: {
+          callbacks: { bookId, name, number, selectedBookCover, title } // Push new callback entry
+        }
+      },
+      { new: true }
+    );
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+
+    sendEmailAboutCallback(updatedUser.email, {
+      enquirerName: name,
+      bookTitle: title,
+      bookId: bookId
     })
 
-      return updatedUser;
-    } catch (error) {
-      console.error("Error adding callback: ", error);
-      throw error; // Propagate error
-    }
+    return updatedUser;
+  } catch (error) {
+    console.error("Error adding callback: ", error);
+    throw error; // Propagate error
+  }
 };
 
 
-export const GET_USER_QUERIES_FROM_DB = async(userId)=>{
-    return userModel.findById(userId);
+export const GET_USER_QUERIES_FROM_DB = async (userId) => {
+  return userModel.findById(userId);
 }
 
-export const GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH = async(searchKey)=>{
+export const GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH = async (searchKey) => {
   try {
     const searchPattern = new RegExp(searchKey, 'i');
 
     // Get matching books count
     const books = await bookModel.find({
-        $or: [
-            { title: { $regex: searchPattern } },
-            { description: { $regex: searchPattern } },
-            // { locationInText: { $regex: searchPattern } },
-        ]
+      $or: [
+        { title: { $regex: searchPattern } },
+        { description: { $regex: searchPattern } },
+        // { locationInText: { $regex: searchPattern } },
+      ]
     }).countDocuments()
-    console.log("Book length =>",books)
+    console.log("Book length =>", books)
 
     // Get unique locations that match the search
     const matchedLocations = await bookModel.distinct('locationInText', {
-        $or: [
-            { locationInText: { $regex: searchPattern } }
-        ]
+      $or: [
+        { locationInText: { $regex: searchPattern } }
+      ]
     }).countDocuments()
-    console.log('matchedLocations ==>' ,matchedLocations)
+    console.log('location length ==>', matchedLocations)
 
-      //   // Get unique locations that match the search
-        const uniqueCategories = await bookModel.distinct('categories', {
-          $or: [
-            { category: { $regex: searchPattern } } 
-          ]
-      }).countDocuments()
-      console.log('uniqueCategories ==>' ,uniqueCategories)
-  
+    //   // Get unique locations that match the search
+    const uniqueCategories = await bookModel.distinct('categories', {
+      $or: [
+        { category: { $regex: searchPattern } }
+      ]
+    }).countDocuments()
+    console.log('Categorylength ==>', uniqueCategories)
+
 
     return {
-        booksLength: books,
-        locations: matchedLocations,
-        categoryLength:uniqueCategories,
+      booksLength: books,
+      locations: matchedLocations,
+      categoryLength: uniqueCategories,
     };
-} catch (error) {
+  } catch (error) {
     console.error('Error in GET_BOOKS_CATEGORIES_LOCATIONS_LENGTH:', error);
     throw error;
+  }
 }
+
+export const GET_SEARCH_RESULT = async ({
+  query,
+  type
+}) => {
+  const searchPattern = new RegExp(query, 'i');
+  if (type == 'books') {
+    const books = await bookModel.find({
+      $or: [
+        { title: { $regex: searchPattern } },
+        { description: { $regex: searchPattern } },
+      ]
+    })
+    console.log("Books =>", books)
+    return books;
+  }else if(type == 'category'){
+        //   // Get unique locations that match the search
+        const uniqueCategories =  await bookModel.find({
+          $or: [
+            { category: { $regex: searchPattern } }
+          ]
+        })
+        console.log('uniqueCategories in search ==>', uniqueCategories)
+        return uniqueCategories;
+  }else if(type == 'locations'){
+    const matchedLocations =  await bookModel.find({
+      $or: [
+        { locationInText: { $regex: searchPattern } }
+      ]
+    })
+    console.log('matchedLocations ==>', matchedLocations)
+    return matchedLocations;
+  }
 }
-
-
-
-
-
 async function sendEmailAboutCallback(email, callbackDetails) {
-    try {
-      // Destructure necessary details from callbackDetails
-      const {
-        bookTitle,
-        enquirerName,
-        bookId
-      } = callbackDetails;
-  
-      // Create the callback details URL
-      const callbackUrl =`${process.env.ENVIRONMENT == "dev" ? `http://localhost:3000/profile` : `https://book-hub-black.vercel.app/profil`}`;
-      // Create the book details URL
-      const bookUrl = `${process.env.ENVIRONMENT == "dev" ? `http://localhost:3000/discover-books/${bookId}` : `https://book-hub-black.vercel.app/discover-books/${bookId}`}`;
-  
-      // Create HTML email template
-      const htmlContent = `
+  try {
+    // Destructure necessary details from callbackDetails
+    const {
+      bookTitle,
+      enquirerName,
+      bookId
+    } = callbackDetails;
+
+    // Create the callback details URL
+    const callbackUrl = `${process.env.ENVIRONMENT == "dev" ? `http://localhost:3000/profile` : `https://book-hub-black.vercel.app/profil`}`;
+    // Create the book details URL
+    const bookUrl = `${process.env.ENVIRONMENT == "dev" ? `http://localhost:3000/discover-books/${bookId}` : `https://book-hub-black.vercel.app/discover-books/${bookId}`}`;
+
+    // Create HTML email template
+    const htmlContent = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -518,29 +548,32 @@ async function sendEmailAboutCallback(email, callbackDetails) {
   </body>
 </html>
 `;
-      
-      // Configure email options
-      const mailOptions = {
-        from: `"Book Hub" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: `New Enquiry for Your Book: ${bookTitle}`,
-        html: htmlContent
-      };
-  
-      // Send the email
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Callback notification email sent successfully:', info.messageId);
-      return {
-        success: true,
-        messageId: info.messageId
-      };
-  
-    } catch (error) {
-      console.error('Error sending callback notification email:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+
+    // Configure email options
+    const mailOptions = {
+      from: `"Book Hub" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: `New Enquiry for Your Book: ${bookTitle}`,
+      html: htmlContent
+    };
+
+    // Send the email
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Callback notification email sent successfully:', info.messageId);
+    return {
+      success: true,
+      messageId: info.messageId
+    };
+
+  } catch (error) {
+    console.error('Error sending callback notification email:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
-  
+
+
+
+

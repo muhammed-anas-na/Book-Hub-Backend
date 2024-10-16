@@ -11,6 +11,7 @@ import {
     getMyBookFromDb,
     GET_USER_QUERIES_FROM_DB,
     GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH,
+    GET_SEARCH_RESULT,
     
 } from '../Database/MongoDB/Repository.js'
 import axios from 'axios';
@@ -51,7 +52,8 @@ export const addBook = async (req, res) => {
 }
 
 export const findNearestBook = async (req, res) => {
-    const { distanceInKm = 5 } = req.body;
+    const { distance = 5 } = req.body;
+    console.log("Radius ==>" , distance);
     let latitude;
     let longitude
     try {
@@ -65,7 +67,7 @@ export const findNearestBook = async (req, res) => {
             err: "User not logged in or not added location."
         })
     }
-    const distanceInMeter = distanceInKm * 1000;
+    const distanceInMeter = distance * 1000;
     const data = await findNearestBooksFromDB(latitude, longitude, distanceInMeter);
     console.log("Nearest books => ", data);
     res.json(data);
@@ -194,5 +196,11 @@ export const getUserQueries = async(req,res)=>{
 export const getSearchLengths = async(req,res)=>{
     console.log("Search Word",req.body);
     const response = await GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH(req.body.data);
+    res.json(response);
+}
+
+export const getSearchResult = async(req,res)=>{
+    console.log("Body ==>",req.body);
+    const response = await GET_SEARCH_RESULT(req.body);
     res.json(response);
 }

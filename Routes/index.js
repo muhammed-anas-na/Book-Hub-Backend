@@ -3,7 +3,7 @@ const router = express.Router();
 import { LoginController, requestCallback,getUserQueries,getSearchLengths,
     addBook,findNearestBook, getMyBooks,updateProfile,googleSignin , getLoggedInUser,
     getBooks,
-    GET_LOCATION_FROM_POINTS_AND_UPDATE_USER,GET_LOCATION_FROM_POINTS,getUserBooks,getBookDetailsByID,
+    GET_LOCATION_FROM_POINTS_AND_UPDATE_USER,GET_LOCATION_FROM_POINTS,getUserBooks,getBookDetailsByID,getSearchResult,
     } from '../Controllers/Auth-controller.js';
 
 
@@ -26,6 +26,7 @@ router.post('/get-user-books' , getUserBooks) //Completed
 router.post('/get-book-details-by-id' , getBookDetailsByID); //Completed
 router.post('/request-callback' , requestCallback)
 router.post('/get-user-queries', getUserQueries);
+router.post('/get-search-result' , getSearchResult);
 //Working on ...........
 router.post('/get-search-length' , getSearchLengths)
 
