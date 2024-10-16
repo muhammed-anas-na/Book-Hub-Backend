@@ -17,7 +17,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
 export const checkUserExist = async (phone) => {
   const user = await userModel.findOne({
     phone
@@ -275,6 +274,13 @@ export const GET_SEARCH_RESULT = async ({
     console.log('matchedLocations ==>', matchedLocations)
     return matchedLocations;
   }
+}
+
+export const deleteProductFromDB = async(productId,userId) =>{
+  return bookModel.findOneAndDelete({
+    _id: productId,
+    userId: userId,
+  });
 }
 async function sendEmailAboutCallback(email, callbackDetails) {
   try {

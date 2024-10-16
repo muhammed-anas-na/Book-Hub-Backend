@@ -12,6 +12,7 @@ import {
     GET_USER_QUERIES_FROM_DB,
     GET_BOOKS_CATEOGRIES_LOCATIONS_LENGTH,
     GET_SEARCH_RESULT,
+    deleteProductFromDB,
     
 } from '../Database/MongoDB/Repository.js'
 import axios from 'axios';
@@ -202,5 +203,19 @@ export const getSearchLengths = async(req,res)=>{
 export const getSearchResult = async(req,res)=>{
     console.log("Body ==>",req.body);
     const response = await GET_SEARCH_RESULT(req.body);
+    res.json(response);
+}
+
+export const deleteBooks = async(req,res)=>{
+    const authCookie = req.cookies.auth;
+    if(!authCookie){
+        res.status(401).json({
+            message:"Not logged in for delete"
+        })
+    }
+    const {_id} = JSON.parse(authCookie);
+    const {productId} = req.body;
+    const response = await deleteProductFromDB(productId, _id);
+    console.log(response);
     res.json(response);
 }

@@ -8,5 +8,6 @@ export const dbConenct = () =>{
     })
     .catch((error) => {
         console.error('Error connecting to MongoDB Atlas:', error);
+        dbConenct()
     });
 }
